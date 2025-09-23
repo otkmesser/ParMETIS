@@ -7,6 +7,9 @@ project(ParMETIS
 
 set(CMAKE_POSITION_INDEPENDENT_CODE TRUE)
 
+include(CheckIncludeFiles)
+check_include_files(regex.h HAVE_REGEX_H)
+
 ##############
 # Build GKlib
 ##############
@@ -66,6 +69,10 @@ target_sources(GKlib PUBLIC
     GKlib/gk_struct.h
     GKlib/gk_types.h
 )
+
+if(NOT HAVE_REGEX_H)
+  target_compile_definitions(GKlib PUBLIC USE_GKREGEX)
+endif()
 
 ##############
 # Build METIS
