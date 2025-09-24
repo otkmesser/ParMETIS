@@ -26,10 +26,9 @@ sudo apt-get install build-essential
 sudo apt-get install cmake
 ```
 
-In addition, you need to download and install
-[GKlib](https://github.com/KarypisLab/GKlib) and 
-[METIS](https://github.com/KarypisLab/METIS) by following the instructions there. 
-
+GKLib and METIS have been vendored for this repository. Current version are:
+- GKLIB: 8bd6bad750b2b0d90800c632cf18e8ee93ad72d7
+- METIS: e0f1b88b8efcb24ffa0ec55eabb78fbe61e58ae7
 
 ### Building and installing ParMETIS  
 
