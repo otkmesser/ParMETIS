@@ -78,8 +78,8 @@ endif()
 # Build METIS
 ##############
 
-set(INDEXTYPEWIDTH 64 CACHE STRING "Bit-width of index types" FORCE)
-set(REALTYPEWIDTH 64 CACHE STRING "Bit-width of floating-point types" FORCE)
+option(INDEXTYPEWIDTH "Bit-width of index types" 64)
+option(REALTYPEWIDTH "Bit-width of floating-point types" 64)
 
 set(METIS_SOURCES
   METIS/libmetis/auxapi.c
