@@ -7,6 +7,9 @@ project(ParMETIS
 
 set(CMAKE_POSITION_INDEPENDENT_CODE TRUE)
 
+option(INDEXTYPEWIDTH "Bit-width of index types" 64)
+option(REALTYPEWIDTH "Bit-width of floating-point types" 64)
+
 include(CheckIncludeFiles)
 check_include_files(regex.h HAVE_REGEX_H)
 
@@ -70,6 +73,9 @@ target_sources(GKlib PUBLIC
     GKlib/gk_types.h
 )
 
+target_compile_definitions(GKlib PUBLIC INDEXTYPEWIDTH=${INDEXTYPEWIDTH})
+target_compile_definitions(GKlib PUBLIC REALTYPEWIDTH=${REALTYPEWIDTH})
+
 if(NOT HAVE_REGEX_H)
   target_compile_definitions(GKlib PUBLIC USE_GKREGEX)
 endif()
@@ -78,8 +84,6 @@ endif()
 # Build METIS
 ##############
 
-option(INDEXTYPEWIDTH "Bit-width of index types" 64)
-option(REALTYPEWIDTH "Bit-width of floating-point types" 64)
 
 set(METIS_SOURCES
   METIS/libmetis/auxapi.c
@@ -153,6 +157,9 @@ target_sources(METIS PUBLIC
 )
 target_link_libraries(METIS PUBLIC GKlib)
 
+target_compile_definitions(METIS PUBLIC INDEXTYPEWIDTH=${INDEXTYPEWIDTH})
+target_compile_definitions(METIS PUBLIC REALTYPEWIDTH=${REALTYPEWIDTH})
+
 #################
 # Build parmetis
 #################
@@ -223,6 +230,10 @@ target_sources(ParMETIS PUBLIC
   FILES
     include/parmetis.h
 )
+
+target_compile_definitions(ParMETIS PUBLIC INDEXTYPEWIDTH=${INDEXTYPEWIDTH})
+target_compile_definitions(ParMETIS PUBLIC REALTYPEWIDTH=${REALTYPEWIDTH})
+
 # Compile parmetis with 64 bit indices and floating point values
 target_link_libraries(ParMETIS PUBLIC GKlib METIS)
 
