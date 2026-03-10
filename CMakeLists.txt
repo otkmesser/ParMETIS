@@ -5,10 +5,11 @@ project(ParMETIS
   DESCRIPTION "Parallel mesh partitioning library"
   LANGUAGES C)
 
-set(CMAKE_POSITION_INDEPENDENT_CODE TRUE)
+# User options
+set(INDEXTYPEWIDTH 64 CACHE STRING "Bit-width of index types")
+set(REALTYPEWIDTH 64 CACHE STRING "Bit-width of floating-point types")
 
-option(INDEXTYPEWIDTH "Bit-width of index types" 64)
-option(REALTYPEWIDTH "Bit-width of floating-point types" 64)
+set(CMAKE_POSITION_INDEPENDENT_CODE TRUE)
 
 include(CheckIncludeFiles)
 check_include_files(regex.h HAVE_REGEX_H)
