@@ -10,6 +10,7 @@ set(INDEXTYPEWIDTH 64 CACHE STRING "Bit-width of index types")
 set(REALTYPEWIDTH 64 CACHE STRING "Bit-width of floating-point types")
 
 set(CMAKE_POSITION_INDEPENDENT_CODE TRUE)
+set(CMAKE_C_STANDARD 99)
 
 include(CheckIncludeFiles)
 check_include_files(regex.h HAVE_REGEX_H)
@@ -19,62 +20,71 @@ check_include_files(regex.h HAVE_REGEX_H)
 ##############
 
 set(GKLIB_SOURCES
-  GKlib/b64.c
-  GKlib/blas.c
-  GKlib/cache.c
-  GKlib/csr.c
-  GKlib/error.c
-  GKlib/evaluate.c
-  GKlib/fkvkselect.c
-  GKlib/fs.c
-  GKlib/getopt.c
-  GKlib/gkregex.c
-  GKlib/gk_util.c
-  GKlib/graph.c
-  GKlib/htable.c
-  GKlib/io.c
-  GKlib/itemsets.c
-  GKlib/mcore.c
-  GKlib/memory.c
-  GKlib/pqueue.c
-  GKlib/random.c
-  GKlib/rw.c
-  GKlib/seq.c
-  GKlib/sort.c
-  GKlib/string.c
-  GKlib/timers.c
-  GKlib/tokenizer.c
+  GKlib/src/b64.c
+  GKlib/src/blas.c
+  GKlib/src/cache.c
+  GKlib/src/csr.c
+  GKlib/src/error.c
+  GKlib/src/evaluate.c
+  GKlib/src/fkvkselect.c
+  GKlib/src/fs.c
+  GKlib/src/getopt.c
+  GKlib/src/gkregex.c
+  GKlib/src/gk_util.c
+  GKlib/src/graph.c
+  GKlib/src/htable.c
+  GKlib/src/io.c
+  GKlib/src/itemsets.c
+  GKlib/src/mcore.c
+  GKlib/src/memory.c
+  GKlib/src/pqueue.c
+  GKlib/src/random.c
+  GKlib/src/rw.c
+  GKlib/src/seq.c
+  GKlib/src/sort.c
+  GKlib/src/string.c
+  GKlib/src/timers.c
+  GKlib/src/tokenizer.c
 )
+
+if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
+  list(APPEND GKLIB_SOURCES GKlib/src/win32/adapt.c)
+endif()
+
 add_library(gklib STATIC)
 target_sources(gklib PRIVATE ${GKLIB_SOURCES})
 target_sources(gklib PUBLIC
   FILE_SET gklib_headers
   TYPE HEADERS
-  BASE_DIRS GKlib
+  BASE_DIRS GKlib/include
   FILES
-    GKlib/gk_arch.h
-    GKlib/gk_defs.h
-    GKlib/gk_externs.h
-    GKlib/gk_getopt.h
-    GKlib/GKlib.h
-    GKlib/gk_macros.h
-    GKlib/gk_mkblas.h
-    GKlib/gk_mkmemory.h
-    GKlib/gk_mkpqueue2.h
-    GKlib/gk_mkpqueue.h
-    GKlib/gk_mkrandom.h
-    GKlib/gk_mksort.h
-    GKlib/gk_mkutils.h
-    GKlib/gk_ms_inttypes.h
-    GKlib/gk_ms_stat.h
-    GKlib/gk_ms_stdint.h
-    GKlib/gk_proto.h
-    GKlib/gkregex.h
-    GKlib/gk_struct.h
-    GKlib/gk_types.h
+    GKlib/include/gk_arch.h
+    GKlib/include/gk_defs.h
+    GKlib/include/gk_externs.h
+    GKlib/include/gk_getopt.h
+    GKlib/include/GKlib.h
+    GKlib/include/gk_macros.h
+    GKlib/include/gk_mkblas.h
+    GKlib/include/gk_mkmemory.h
+    GKlib/include/gk_mkpqueue2.h
+    GKlib/include/gk_mkpqueue.h
+    GKlib/include/gk_mkrandom.h
+    GKlib/include/gk_mksort.h
+    GKlib/include/gk_mkutils.h
+    GKlib/include/gk_ms_inttypes.h
+    GKlib/include/gk_ms_stat.h
+    GKlib/include/gk_ms_stdint.h
+    GKlib/include/gk_proto.h
+    GKlib/include/gkregex.h
+    GKlib/include/gk_struct.h
+    GKlib/include/gk_types.h
 )
 
-target_compile_definitions(gklib PUBLIC INDEXTYPEWIDTH=${INDEXTYPEWIDTH})
+if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
+  target_sources(gklib PUBLIC FILE_SET gklib_headers TYPE HEADERS BASE_DIRS GKlib/include FILES GKlib/include/win32/adapt.h)
+endif()
+
+target_compile_definitions(gklib PUBLIC IDXTYPEWIDTH=${INDEXTYPEWIDTH})
 target_compile_definitions(gklib PUBLIC REALTYPEWIDTH=${REALTYPEWIDTH})
 
 if(NOT HAVE_REGEX_H)
@@ -124,12 +134,6 @@ set(METIS_SOURCES
   METIS/libmetis/wspace.c
 )
 
-# NOTE(mmuegge): METIS, and by extension ParMETIS, require choosing bit-widths
-# for index and floating-point types. The intended way to do this is to #define
-# these values in the metis.h header. We use configure_file to insert the
-# values of INDEXTYPEWIDTH and REALTYPEWIDTH into the header.
-configure_file(metis.h.in metis.h @ONLY)
-
 add_library(metis STATIC)
 target_sources(metis PRIVATE ${METIS_SOURCES})
 target_sources(metis PRIVATE
@@ -148,17 +152,16 @@ target_sources(metis PRIVATE
     METIS/libmetis/struct.h
 )
 
-# Add the generated metis.h as the only public header
 target_sources(metis PUBLIC
   FILE_SET metis_public_headers
   TYPE HEADERS
-  BASE_DIRS ${CMAKE_CURRENT_BINARY_DIR}
+  BASE_DIRS METIS/include
   FILES
-    ${CMAKE_CURRENT_BINARY_DIR}/metis.h
+    METIS/include/metis.h
 )
 target_link_libraries(metis PUBLIC gklib)
 
-target_compile_definitions(metis PUBLIC INDEXTYPEWIDTH=${INDEXTYPEWIDTH})
+target_compile_definitions(metis PUBLIC IDXTYPEWIDTH=${INDEXTYPEWIDTH})
 target_compile_definitions(metis PUBLIC REALTYPEWIDTH=${REALTYPEWIDTH})
 
 #################
@@ -166,46 +169,46 @@ target_compile_definitions(metis PUBLIC REALTYPEWIDTH=${REALTYPEWIDTH})
 #################
 
 set(PARMETIS_SOURCES
-  libparmetis/akwayfm.c
-  libparmetis/ametis.c
-  libparmetis/balancemylink.c
-  libparmetis/comm.c
-  libparmetis/csrmatch.c
-  libparmetis/ctrl.c
-  libparmetis/debug.c
-  libparmetis/diffutil.c
-  libparmetis/frename.c
-  libparmetis/gklib.c
-  libparmetis/gkmetis.c
-  libparmetis/gkmpi.c
-  libparmetis/graph.c
-  libparmetis/initbalance.c
-  libparmetis/initmsection.c
-  libparmetis/initpart.c
-  libparmetis/kmetis.c
-  libparmetis/kwayrefine.c
-  libparmetis/match.c
-  libparmetis/mdiffusion.c
-  libparmetis/mesh.c
-  libparmetis/mmetis.c
-  libparmetis/move.c
-  libparmetis/msetup.c
-  libparmetis/node_refine.c
-  libparmetis/ometis.c
-  libparmetis/pspases.c
-  libparmetis/redomylink.c
-  libparmetis/remap.c
-  libparmetis/renumber.c
-  libparmetis/rmetis.c
-  libparmetis/selectq.c
-  libparmetis/serial.c
-  libparmetis/stat.c
-  libparmetis/timer.c
-  libparmetis/util.c
-  libparmetis/wave.c
-  libparmetis/weird.c
-  libparmetis/wspace.c
-  libparmetis/xyzpart.c
+  ParMETIS/libparmetis/akwayfm.c
+  ParMETIS/libparmetis/ametis.c
+  ParMETIS/libparmetis/balancemylink.c
+  ParMETIS/libparmetis/comm.c
+  ParMETIS/libparmetis/csrmatch.c
+  ParMETIS/libparmetis/ctrl.c
+  ParMETIS/libparmetis/debug.c
+  ParMETIS/libparmetis/diffutil.c
+  ParMETIS/libparmetis/frename.c
+  ParMETIS/libparmetis/gklib.c
+  ParMETIS/libparmetis/gkmetis.c
+  ParMETIS/libparmetis/gkmpi.c
+  ParMETIS/libparmetis/graph.c
+  ParMETIS/libparmetis/initbalance.c
+  ParMETIS/libparmetis/initmsection.c
+  ParMETIS/libparmetis/initpart.c
+  ParMETIS/libparmetis/kmetis.c
+  ParMETIS/libparmetis/kwayrefine.c
+  ParMETIS/libparmetis/match.c
+  ParMETIS/libparmetis/mdiffusion.c
+  ParMETIS/libparmetis/mesh.c
+  ParMETIS/libparmetis/mmetis.c
+  ParMETIS/libparmetis/move.c
+  ParMETIS/libparmetis/msetup.c
+  ParMETIS/libparmetis/node_refine.c
+  ParMETIS/libparmetis/ometis.c
+  ParMETIS/libparmetis/pspases.c
+  ParMETIS/libparmetis/redomylink.c
+  ParMETIS/libparmetis/remap.c
+  ParMETIS/libparmetis/renumber.c
+  ParMETIS/libparmetis/rmetis.c
+  ParMETIS/libparmetis/selectq.c
+  ParMETIS/libparmetis/serial.c
+  ParMETIS/libparmetis/stat.c
+  ParMETIS/libparmetis/timer.c
+  ParMETIS/libparmetis/util.c
+  ParMETIS/libparmetis/wave.c
+  ParMETIS/libparmetis/weird.c
+  ParMETIS/libparmetis/wspace.c
+  ParMETIS/libparmetis/xyzpart.c
 )
 
 add_library(parmetis STATIC)
@@ -213,26 +216,26 @@ target_sources(parmetis PRIVATE ${PARMETIS_SOURCES})
 target_sources(parmetis PRIVATE
   FILE_SET parmetis_private_headers
   TYPE HEADERS
-  BASE_DIRS libparmetis
+  BASE_DIRS ParMETIS/libparmetis
   FILES
-    libparmetis/defs.h
-    libparmetis/gklib_defs.h
-    libparmetis/gklib_rename.h
-    libparmetis/macros.h
-    libparmetis/parmetislib.h
-    libparmetis/proto.h
-    libparmetis/rename.h
-    libparmetis/struct.h
+    ParMETIS/libparmetis/defs.h
+    ParMETIS/libparmetis/gklib_defs.h
+    ParMETIS/libparmetis/gklib_rename.h
+    ParMETIS/libparmetis/macros.h
+    ParMETIS/libparmetis/parmetislib.h
+    ParMETIS/libparmetis/proto.h
+    ParMETIS/libparmetis/rename.h
+    ParMETIS/libparmetis/struct.h
 )
 target_sources(parmetis PUBLIC
   FILE_SET parmetis_public_headers
   TYPE HEADERS
-  BASE_DIRS include
+  BASE_DIRS ParMETIS/include
   FILES
-    include/parmetis.h
+    ParMETIS/include/parmetis.h
 )
 
-target_compile_definitions(parmetis PUBLIC INDEXTYPEWIDTH=${INDEXTYPEWIDTH})
+target_compile_definitions(parmetis PUBLIC IDXTYPEWIDTH=${INDEXTYPEWIDTH})
 target_compile_definitions(parmetis PUBLIC REALTYPEWIDTH=${REALTYPEWIDTH})
 
 # Compile parmetis with 64 bit indices and floating point values
